@@ -1,6 +1,6 @@
-<h1 align="center">💦 BPB Warp Scanner</h1>
+<h1 align="center">💦 Warp Scanner</h1>
 
-This project is developed to provide a handy Warp endpoints scanner for [BPB Panel](https://github.com/bia-pain-bache/BPB-Worker-Panel) using [Xray-core](https://github.com/XTLS/Xray-core)
+This project is developed to provide a handy Warp endpoints scanner for [BPB Panel](https://github.com/nyeinkokoaung404/BPB-Worker-Panel) using [Xray-core](https://github.com/XTLS/Xray-core)
 
 ## Features
 
@@ -32,7 +32,7 @@ This project is developed to provide a handy Warp endpoints scanner for [BPB Pan
 
 ### Windows - Darwin
 
-Based on your operating system architecture, [download the ZIP file](https://github.com/bia-pain-bache/BPB-Warp-Scanner/releases/latest), unzip it, and run the `BPB-Warp-Scanner`.
+Based on your operating system architecture, [download the ZIP file](https://github.com/nyeinkokoaung404/warp-scanner/releases/latest), unzip it, and run the `warp-scanner`.
 
 ### Android (Termux) - Linux
 
@@ -42,5 +42,5 @@ Based on your operating system architecture, [download the ZIP file](https://git
 Android users who have Termux installed on their device and Linux users can use this bash:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Warp-Scanner/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/nyeinkokoaung404/warp-scanner/main/install.sh)
 ```
