@@ -1,4 +1,4 @@
-module github.com/bia-pain-bache/BPB-Warp-Scanner
+module github.com/nyeinkokoaung404/warp-scanner
 
 go 1.24.3
 
