@@ -17,7 +17,7 @@ esac
 
 BINARY="BPB-Warp-Scanner"
 ARCHIVE="${BINARY}-linux-${ARCH}.tar.gz"
-LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/bia-pain-bache/BPB-Warp-Scanner/main/VERSION)
+LATEST_VERSION=$(curl -fsSL https://raw.githubusercontent.com/nyeinkokoaung404/warp-scanner/main/VERSION)
 
 if [ -x "./${BINARY}" ]; then
     INSTALLED_VERSION=$("./${BINARY}" --version)
@@ -35,6 +35,6 @@ else
 fi
 
 echo "Downloading ${ARCHIVE}..."
-curl -L -# -o "${ARCHIVE}" "https://github.com/bia-pain-bache/BPB-Warp-Scanner/releases/latest/download/${ARCHIVE}" && \
+curl -L -# -o "${ARCHIVE}" "https://github.com/nyeinkokoaung404/warp-scanner/releases/latest/download/${ARCHIVE}" && \
 tar xzf "./${ARCHIVE}" && \
 exec "./${BINARY}"
