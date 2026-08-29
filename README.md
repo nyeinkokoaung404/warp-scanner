@@ -1,46 +1,45 @@
-<h1 align="center">💦 Warp Scanner</h1>
+<h1 align="center">WARP IP Scanner</h1>
 
-This project is developed to provide a handy Warp endpoints scanner for [BPB Panel](https://github.com/nyeinkokoaung404/BPB-Worker-Panel) using [Xray-core](https://github.com/XTLS/Xray-core)
+A lightweight, cross-platform scanner for finding reachable Cloudflare WARP IP endpoints. The scanner probes WARP IP and port combinations directly over TCP and reports connection latency and loss rate. It does not register WARP accounts, create WireGuard configurations, or require Xray-core.
 
 ## Features
 
-- Tests network quality based on IP version to optimize scan settings
-- Registers a new Warp config per scan
-- Performs real delay test instead of ping to extract real endpoints
-- Ability to adjust output results count
-- 3 IP version modes: `IPv4`, `IPv6` and `IPv4 & IPv6`
-- Setting quantity of endpoints to scan: `Quick`, `Normal`, `Deep` and `Custom` modes
-- Optional mode to scan with or without UDP noise
-- Full noise configuration options with `Base64`, `Hex`, `String` and `Random` modes
+- Direct TCP reachability checks for WARP IPv4 and IPv6 endpoints.
+- IPv4-only, IPv6-only, or dual-stack scanning.
+- Quick, normal, deep, and custom scan sizes.
+- Three connection attempts per endpoint with a two-second timeout.
+- Results sorted by average connection latency.
+- CSV export to `result.csv`.
+- Standalone binaries with no bundled Xray-core dependency.
 
-> [!TIP]
-> For most reliable results, Please set noise configuration exactly similar to your BPB Panel v2ray noise.  
-> The default noise is like BPB Panel:  
-> ```text
-> type: Random
-> Packet: 50-100
-> Delay: 1-5 ms
-> Count: 5
-> ```
+## Usage
 
-## 💡 How to use
+Disconnect any active VPN before scanning. On Windows, exit v2rayN or other proxy applications completely and clear any system proxy settings.
 
-> [!IMPORTANT]
-> Please disconnect your VPN before scanning.
->
-> In windwos you should totally exit v2rayN from taskbar, clearing system proxy is not enough.
+### Windows, macOS, and Linux
 
-### Windows - Darwin
+Download the latest archive from the [Releases page](https://github.com/nyeinkokoaung404/warp-scanner/releases/latest), extract it, and run `BPB-Warp-Scanner`.
 
-Based on your operating system architecture, [download the ZIP file](https://github.com/nyeinkokoaung404/warp-scanner/releases/latest), unzip it, and run the `warp-scanner`.
+### Android (Termux)
 
-### Android (Termux) - Linux
-
-> [!WARNING]
-> You should install Termux from [Github](https://github.com/termux/termux-app/releases/latest), Google play version has bugs.
-
-Android users who have Termux installed on their device and Linux users can use this bash:
+Install Termux from the [official GitHub releases](https://github.com/termux/termux-app/releases/latest), then run:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/nyeinkokoaung404/warp-scanner/main/install.sh)
 ```
+
+The scanner saves `result.csv` in the current directory. A successful result means the endpoint accepted a direct TCP connection; it does not create or validate a VPN tunnel.
+
+## Build
+
+Go 1.24.3 or newer is required.
+
+```bash
+make build
+```
+
+The build creates a platform archive under `dist/` and contains only the scanner binary and license file.
+
+## License
+
+See [LICENSE](LICENSE).

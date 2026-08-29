@@ -2,10 +2,7 @@ module github.com/nyeinkokoaung404/warp-scanner
 
 go 1.24.3
 
-require (
-	github.com/charmbracelet/lipgloss v1.1.0
-	golang.org/x/crypto v0.40.0
-)
+require github.com/charmbracelet/lipgloss v1.1.0
 
 require (
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
