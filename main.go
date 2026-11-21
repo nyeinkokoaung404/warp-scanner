@@ -27,6 +27,9 @@ type ScanConfig struct {
 	Ipv4Mode      bool
 	Ipv6Mode      bool
 	OutputCount   int
+	// FixedPort, when non-zero, is used for every generated endpoint
+	// instead of a random port from the list (e.g. 500 for port-500-only).
+	FixedPort int
 }
 
 var (
@@ -57,6 +60,11 @@ func renderHeader() {
 
 func generateEndpoints() {
 	ports := []int{500, 854, 859, 864, 878, 880, 890, 891, 894, 903, 908, 928, 934, 939, 942, 943, 945, 946, 955, 968, 987, 988, 1002, 1010, 1014, 1018, 1070, 1074, 1180, 1387, 1701, 1843, 2371, 2408, 2506, 3138, 3476, 3581, 3854, 4177, 4198, 4233, 4500, 5279, 5956, 7103, 7152, 7156, 7281, 7559, 8319, 8742, 8854, 8886}
+	// When a fixed port is selected, every endpoint uses it instead of a
+	// random port from the list.
+	if scanConfig.FixedPort != 0 {
+		ports = []int{scanConfig.FixedPort}
+	}
 	ipv4Prefixes := []string{"188.114.96.", "188.114.97.", "188.114.98.", "188.114.99.", "162.159.192.", "162.159.193.", "162.159.195.", "8.34.146.", "8.39.214.", "8.39.204.", "8.6.112.", "8.35.211.", "8.39.125.", "8.47.69."}
 	ipv6Prefixes := []string{"2606:4700:d0::", "2606:4700:d1::"}
 
@@ -170,6 +178,37 @@ func main() {
 			scanConfig.Ipv4Mode, scanConfig.Ipv6Mode = false, true
 		case "3":
 			scanConfig.Ipv4Mode, scanConfig.Ipv6Mode = true, true
+		default:
+			failMessage("Please select 1 to 3.")
+			continue
+		}
+		break
+	}
+
+	fmt.Println("\nSelect port:")
+	fmt.Println("1. All ports (random)")
+	fmt.Println("2. Port 500 only")
+	fmt.Println("3. Custom port")
+	for {
+		fmt.Printf("\n%s Port (1-3): ", prompt)
+		var portMode string
+		fmt.Scanln(&portMode)
+		switch portMode {
+		case "1":
+			scanConfig.FixedPort = 0
+		case "2":
+			scanConfig.FixedPort = 500
+		case "3":
+			for {
+				fmt.Printf("%s Custom port (1-65535): ", prompt)
+				var port string
+				fmt.Scanln(&port)
+				if valid, number := checkNum(port, 1, 65535); valid {
+					scanConfig.FixedPort = number
+					break
+				}
+				failMessage("Please enter a number between 1 and 65535.")
+			}
 		default:
 			failMessage("Please select 1 to 3.")
 			continue
