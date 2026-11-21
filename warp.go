@@ -14,6 +14,7 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 
 	"golang.org/x/crypto/curve25519"
@@ -25,6 +26,11 @@ const (
 	warpPeerPublicKey = "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo="
 	// Standard unregistered client address inside the tunnel.
 	warpClientAddress = "172.16.0.2/32"
+	// Cloudflare's WARP client IPv6 range: every public WARP WireGuard
+	// configuration (including plain configs that connect fine) carries an
+	// address from 2606:4700:110::/48. The data plane accepts any address
+	// from this range; it is not tied to a registered account.
+	warpClientIPv6Prefix = "2606:4700:110"
 )
 
 type KeyPair struct {
@@ -33,13 +39,32 @@ type KeyPair struct {
 }
 
 // WarpParams carries everything a WireGuard outbound needs to talk to a
-// WARP endpoint. IPv6 and Reserved stay empty without a registered account;
-// the tunnel address is IPv4-only (see core.go).
+// WARP endpoint. The tunnel is dual-stack like every public WARP config:
+// the standard unregistered IPv4 address plus a random address from
+// Cloudflare's 2606:4700:110::/48 client range, and the standard reserved
+// bytes 0,0,0.
 type WarpParams struct {
 	IPv6       string
 	Reserved   []int
 	PublicKey  string
 	PrivateKey string
+}
+
+// randomWarpIPv6 returns a random address from 2606:4700:110::/48.
+func randomWarpIPv6() string {
+	var b [10]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		// Extremely unlikely; fall back to a fixed address in the range.
+		return warpClientIPv6Prefix + "::1"
+	}
+	return fmt.Sprintf("%s:%x:%x:%x:%x:%x",
+		warpClientIPv6Prefix,
+		binary.BigEndian.Uint16(b[0:2]),
+		binary.BigEndian.Uint16(b[2:4]),
+		binary.BigEndian.Uint16(b[4:6]),
+		binary.BigEndian.Uint16(b[6:8]),
+		binary.BigEndian.Uint16(b[8:10]),
+	)
 }
 
 func GenerateWireGuardKeyPair() (publicKey, privateKey string, err error) {
@@ -68,8 +93,8 @@ func getWarpParams() (WarpParams, error) {
 	}
 
 	return WarpParams{
-		IPv6:       "",
-		Reserved:   nil,
+		IPv6:       randomWarpIPv6(),
+		Reserved:   []int{0, 0, 0},
 		PublicKey:  warpPeerPublicKey,
 		PrivateKey: privateKey,
 	}, nil
