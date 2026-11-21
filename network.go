@@ -50,6 +50,17 @@ func scanEndpoints(endpoints []string) []ScanResult {
 
 			bar.Add(1)
 			if successful == 0 {
+				// TCP proved nothing, but WARP is a UDP (WireGuard) service:
+				// nothing listens on TCP on a WARP port, so a refused TCP
+				// dial does not mean the endpoint is dead. Send a real
+				// WireGuard handshake initiation; only a genuine WARP
+				// server can answer it.
+				if latency, ok := probeWireGuard(endpoint, probeTimeout); ok {
+					result := ScanResult{Endpoint: endpoint, Loss: 0, Latency: latency}
+					results <- result
+					log.Printf("[%d] %s -> Success (WireGuard handshake) - Avg. Latency: %d ms", index+1, endpoint, result.Latency)
+					return
+				}
 				log.Printf("[%d] %s -> %s", index+1, endpoint, "Failed")
 				return
 			}
