@@ -115,13 +115,16 @@ func buildWgOutbound(index int, endpoint string, warpConfig WarpParams) WgOutbou
 	outbound := WgOutbound{
 		Protocol: "wireguard",
 		Settings: Settings{
-			// No registered account, so the tunnel address is the standard
-			// unregistered client address only. The endpoint itself (IPv4
-			// or IPv6) is still fully tested: the outer WireGuard UDP
-			// packets go to it, and the test traffic inside the tunnel is
-			// IPv4 (see the forced UseIPv4 query strategy below).
+			// No registered account, so the tunnel uses the standard
+			// unregistered client addresses (IPv4 + a random address from
+			// Cloudflare's 2606:4700:110::/48 client range), exactly like
+			// a plain WARP WireGuard config. The endpoint itself (IPv4 or
+			// IPv6) is still fully tested: the outer WireGuard UDP packets
+			// go to it, and the test traffic inside the tunnel follows the
+			// scan mode (see the query strategy below).
 			Address: []string{
 				warpClientAddress,
+				warpConfig.IPv6 + "/128",
 			},
 			Mtu:         1280,
 			NoKernelTun: true,
@@ -160,11 +163,14 @@ func buildRoutingRule(index int) RoutingRule {
 }
 
 func buildConfig() (XrayConfig, error) {
-	// The tunnel has an IPv4-only address (no registered account), so the
-	// test target must resolve to IPv4 even when scanning IPv6 endpoints.
-	// The endpoint is still genuinely tested: the WireGuard handshake and
-	// the traffic inside the tunnel go to that endpoint either way.
-	queryStrategy := "UseIPv4"
+	// The tunnel is dual-stack now (see warp.go), so the test target
+	// resolves in the family the scan mode uses, as upstream does.
+	queryStrategy := "UseIP"
+	if scanConfig.Ipv4Mode && !scanConfig.Ipv6Mode {
+		queryStrategy = "UseIPv4"
+	} else if scanConfig.Ipv6Mode && !scanConfig.Ipv4Mode {
+		queryStrategy = "UseIPv6"
+	}
 
 	config := XrayConfig{
 		Remarks: "test",
