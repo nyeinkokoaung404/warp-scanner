@@ -68,6 +68,26 @@ func initHttpClient(preferIPv6 bool) {
 	}
 }
 
+// resolveTestTarget resolves the tunnel-test target once, using the system
+// resolver, so the per-endpoint test does not depend on Xray's own DNS
+// (8.8.8.8), which some networks block or intercept. The test is then made
+// against the resolved IP with the original Host header, so Xray never has
+// to resolve anything for the test itself. On failure it falls back to the
+// hostname, i.e. the previous behaviour.
+func resolveTestTarget() (targetURL, hostHeader string) {
+	const host = "www.gstatic.com"
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	ips, err := net.DefaultResolver.LookupIP(ctx, "ip4", host)
+	if err != nil || len(ips) == 0 {
+		log.Printf("Warning: could not resolve %s (%v), testing by hostname", host, err)
+		return "http://" + host + "/generate_204", host
+	}
+	targetURL = "http://" + ips[0].String() + "/generate_204"
+	successMessage(fmt.Sprintf("Test target resolved: %s -> %s", host, ips[0].String()))
+	return targetURL, host
+}
+
 func checkNetworkStats(preferIPv6 bool) {
 	fmt.Printf("\n%s Determining network quality to adjust scan options...\n\n", prompt)
 	const (
@@ -194,6 +214,8 @@ func checkNetworkStats(preferIPv6 bool) {
 }
 
 func scanEndpoints() ([]ScanResult, error) {
+	testTargetURL, testTargetHost := resolveTestTarget()
+
 	err := createXrayConfig()
 	if err != nil {
 		return nil, err
@@ -231,6 +253,9 @@ func scanEndpoints() ([]ScanResult, error) {
 
 			var innerWg sync.WaitGroup
 			latencies := make(chan int64, currentRetries)
+			// Keep the failure reasons: "Failed" alone hides whether the
+			// tunnel, the DNS, or the proxy is at fault.
+			failures := make(chan string, currentRetries)
 
 			for t := range currentRetries {
 				innerWg.Add(1)
@@ -242,21 +267,39 @@ func scanEndpoints() ([]ScanResult, error) {
 						Transport: transport,
 					}
 
+					req, err := http.NewRequest("HEAD", testTargetURL, nil)
+					if err != nil {
+						failures <- err.Error()
+						latencies <- -1
+						return
+					}
+					// The URL may be an IP (see resolveTestTarget); the
+					// Host header still names the real target so the
+					// front-end answers 204.
+					req.Host = testTargetHost
+
 					start := time.Now()
-					resp, err := client.Head("http://www.gstatic.com/generate_204")
+					resp, err := client.Do(req)
 					latency := time.Since(start).Milliseconds()
-					if err == nil && resp.StatusCode == 204 {
-						if resp.Body != nil {
-							resp.Body.Close()
-						}
+					if err != nil {
+						failures <- err.Error()
+						latencies <- -1
+						return
+					}
+					if resp.Body != nil {
+						resp.Body.Close()
+					}
+					if resp.StatusCode == 204 {
 						latencies <- latency
 					} else {
+						failures <- fmt.Sprintf("HTTP %d", resp.StatusCode)
 						latencies <- -1
 					}
 				}(t * scanConfig.RetryStaggeringMs)
 			}
 			innerWg.Wait()
 			close(latencies)
+			close(failures)
 
 			for l := range latencies {
 				if l >= 0 {
@@ -266,7 +309,11 @@ func scanEndpoints() ([]ScanResult, error) {
 			}
 
 			if successCount == 0 {
-				log.Printf("[%d] %s -> %s\n", i+1, fmtStr(endpoint, ORANGE, false), fmtStr("Failed", RED, true))
+				lastErr := ""
+				for e := range failures {
+					lastErr = e
+				}
+				log.Printf("[%d] %s -> %s (%s)\n", i+1, fmtStr(endpoint, ORANGE, false), fmtStr("Failed", RED, true), lastErr)
 			} else {
 				avgLatency := totalLatency / int64(successCount)
 				lossRate := float64(currentRetries-successCount) / float64(currentRetries) * 100
