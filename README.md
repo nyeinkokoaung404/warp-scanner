@@ -5,7 +5,9 @@ A lightweight, cross-platform scanner for finding reachable Cloudflare WARP IP e
 ## Features
 
 - Direct TCP reachability checks for WARP IPv4 and IPv6 endpoints.
+- When TCP fails, a genuine WireGuard handshake probe (UDP) verifies the endpoint is a live WARP server.
 - IPv4-only, IPv6-only, or dual-stack scanning.
+- Port selection: all ports (random), port 500 only, or a custom port.
 - Quick, normal, deep, and custom scan sizes.
 - Three connection attempts per endpoint with a two-second timeout.
 - Results sorted by average connection latency.
@@ -28,7 +30,9 @@ Install Termux from the [official GitHub releases](https://github.com/termux/ter
 bash <(curl -fsSL https://raw.githubusercontent.com/nyeinkokoaung404/warp-scanner/main/install.sh)
 ```
 
-The scanner saves `result.csv` in the current directory. A successful result means the endpoint accepted a direct TCP connection; it does not create or validate a VPN tunnel.
+The scanner saves `result.csv` in the current directory. A successful result means the endpoint accepted a direct TCP connection or answered a WireGuard handshake; it does not create or validate a VPN tunnel.
+
+If a scan finds no live endpoints at all, the network itself may be blocking Cloudflare WARP ranges (some Myanmar ISPs do). Try the same scan from another network, or run the scanner on a VPS that can reach Cloudflare.
 
 ## Build
 
