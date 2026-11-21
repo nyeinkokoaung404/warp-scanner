@@ -1,6 +1,6 @@
-# v1.2.0 — WARP IP scanner only
+# v1.3.0 — Port selection and real WireGuard probing
 
-- Removed WARP account registration and WireGuard config generation entirely. The scanner no longer contacts `api.cloudflareclient.com`, so it works even on networks where WARP registration is blocked.
-- Removed the "situation" and custom-noise setup steps. The flow is now: scan mode → IP version → results.
-- Direct TCP reachability probes of WARP IP endpoints, sorted by average latency, exported to `result.csv`.
-- No Xray-core dependency; standalone binaries.
+- New port menu: scan all ports (random, as before), port 500 only, or a custom port. Port 500 endpoints are now all `:500`.
+- WARP is a WireGuard (UDP) service, so a TCP dial alone can miss live endpoints: nothing listens on TCP on a WARP port. When all TCP attempts fail, the scanner now sends a genuine WireGuard handshake initiation (Noise_IK, encrypted to Cloudflare's well-known WARP public key) and counts a valid handshake response as live. Only a real WARP server can answer it.
+- Fixes empty results on networks where TCP to WARP ports is refused or filtered but the WireGuard service itself is reachable.
+- The flow is now: scan mode → IP version → port → results.
