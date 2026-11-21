@@ -1,6 +1,8 @@
-# v1.3.0 — Port selection and real WireGuard probing
+# v1.4.0 — Upstream rewrite, no account registration
 
-- New port menu: scan all ports (random, as before), port 500 only, or a custom port. Port 500 endpoints are now all `:500`.
-- WARP is a WireGuard (UDP) service, so a TCP dial alone can miss live endpoints: nothing listens on TCP on a WARP port. When all TCP attempts fail, the scanner now sends a genuine WireGuard handshake initiation (Noise_IK, encrypted to Cloudflare's well-known WARP public key) and counts a valid handshake response as live. Only a real WARP server can answer it.
-- Fixes empty results on networks where TCP to WARP ports is refused or filtered but the WireGuard service itself is reachable.
-- The flow is now: scan mode → IP version → port → results.
+- Rewritten following upstream BPB-Warp-Scanner: endpoints are now tested end-to-end through a real WireGuard tunnel (Xray-core) instead of TCP dials/handshake probes. An endpoint is reported live only if it actually carries traffic through the tunnel.
+- **WARP account registration removed.** The upstream scanner registered a fresh account on every scan via `api.cloudflareclient.com` (this failed with "error registering warp ... connection refused" where that API is unreachable). This build generates the client keypair locally and uses Cloudflare's well-known WARP public key; nothing contacts the registration API.
+- UDP noise is back (default profile, or custom base64/hex/string/random packets) for ISPs that block WARP, plus the situation menu and the network-quality check that adjusts retries automatically.
+- Port menu from v1.3.0 is kept: all ports (random), port 500 only, or a custom port.
+- The release archive now bundles Xray-core (`core/xray`) again, so downloads are larger. Do not delete `core/` next to the scanner.
+- Note: the tunnel address is IPv4-only (no registered account means no account IPv6 address). IPv6 endpoints are still genuinely tested — the handshake and traffic go to the IPv6 endpoint; only the test traffic inside the tunnel is IPv4.
