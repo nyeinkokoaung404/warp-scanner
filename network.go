@@ -76,9 +76,14 @@ func initHttpClient(preferIPv6 bool) {
 // hostname, i.e. the previous behaviour.
 func resolveTestTarget() (targetURL, hostHeader string) {
 	const host = "www.gstatic.com"
+	// Resolve in the family the scan mode uses (the tunnel is dual-stack).
+	network := "ip4"
+	if scanConfig.Ipv6Mode && !scanConfig.Ipv4Mode {
+		network = "ip6"
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	ips, err := net.DefaultResolver.LookupIP(ctx, "ip4", host)
+	ips, err := net.DefaultResolver.LookupIP(ctx, network, host)
 	if err != nil || len(ips) == 0 {
 		log.Printf("Warning: could not resolve %s (%v), testing by hostname", host, err)
 		return "http://" + host + "/generate_204", host
