@@ -24,6 +24,7 @@ build: pre-build
 	rm $(XRAY_ZIP); \
 	echo "Building for $(GOOS)-$(GOARCH)..."; \
 	outdir="$(OUT_DIR)/$(APP_NAME)-$(GOOS)-$(GOARCH)"; \
+	rm -rf "$$outdir"; \
 	mkdir -p "$$outdir"; \
 	if [ "$(GOOS)" = "windows" ]; then ext=".exe"; else ext=""; fi; \
 	GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build -trimpath -ldflags '$(LDFLAGS)' -o "$$outdir/$(APP_NAME)$$ext"; \
